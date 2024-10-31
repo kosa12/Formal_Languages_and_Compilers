@@ -1,0 +1,10 @@
+S A B VEG
+a b c
+S
+VEG
+S a S
+S a A
+S a VEG
+A b B
+A b VEG
+B c A

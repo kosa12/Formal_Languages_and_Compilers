@@ -1,0 +1,40 @@
+Veremautomata
+Vizsgaljuk meg, hogy egy veremautomata felismer-e egy adott szot
+(vegallapottal vagy ures veremmel).
+A bemeneti allomany alakja:
+I 1. sor: allapotok, szokozokkel elvalasztva
+I 2. sor: bemeneti abece elemei, szokozokkel elvalasztva
+I 3. sor: veremabece elemei, szokozokkel elvalasztva
+I 4. sor: kezdoallapot
+I 5. sor: veremmemoria kezdojele
+I 6. sor: vegallapotok, szokozokkel elvalasztva
+I kovetkezo sorokban egy-egy atmenet:
+qi a zi zi1 zi2 . . . zik qj
+vagyis allapot, bemeneti szimbolum, veremszimbolum, uj
+veremszimbolumok, uj allapot.
+
+PYTHON
+
+(form_I.B.2_b.txt)
+
+q0 q1 q2
+a b c
+z0 z1
+q0
+z0
+
+q0 a z0 z0 q1
+q1 a z0 z0 q1
+q1 b z0 z1 q2
+q2 b z1 z1 z1 q2
+q2 c z1 eps q2
+
+(form_I.B.2_b_szavak.txt)
+
+aaabbb
+aabbb
+abab
+
+aaaabbbb
+aaaaa
+
