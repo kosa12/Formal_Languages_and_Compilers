@@ -21,9 +21,8 @@ void yyerror(const char *s);
 %token <strval> CHAR_CONST
 %token PLUS MINUS MUL DIVISION
 %token LEFT_ROUND_BRACKET RIGHT_ROUND_BRACKET LEFT_CURLY_BRACKET RIGHT_CURLY_BRACKET SEMICOLON
-%token IF READ PRINT ASSIGN
+%token IF ELSE READ PRINT ASSIGN
 %token ERROR
-%token DECLARATION_ERROR
 %token GREATER_THAN LESS_THAN
 
 %type <intval> expression term factor
@@ -44,6 +43,7 @@ program:
 statements:
     statement
     | statements statement
+    | error SEMICOLON { yyerror("Error recovered at statement level"); }
     ;
 
 statement:
@@ -78,6 +78,8 @@ read_stmt:
 
 if_stmt:
     IF LEFT_ROUND_BRACKET expression RIGHT_ROUND_BRACKET LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET
+    | IF LEFT_ROUND_BRACKET expression RIGHT_ROUND_BRACKET LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET ELSE LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET
+    | error { yyerror("Error recovered in if statement"); }
     ;
 
 expression:

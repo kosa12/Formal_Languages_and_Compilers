@@ -1,6 +1,6 @@
 int x;
 float y;
-int z + 3;
+int z;
 
 x = 10;
 y = 3.14;
@@ -8,6 +8,12 @@ z = x + y;
 
 if (x > y) {
     print x;
+}
+
+if (5 > 3) {
+    print 10;
+} else {
+    print 20;
 }
 
 read z;

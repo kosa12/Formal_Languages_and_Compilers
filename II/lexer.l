@@ -18,6 +18,7 @@ CHAR_CONST        \'[a-zA-Z0-9_]\'
 "int"       {printf("Reserved word: %s\n", yytext); return INT;}
 "float"     {printf("Reserved word: %s\n", yytext); return FLOAT;}
 "if"        {printf("Reserved word: %s\n", yytext); return IF;}
+"else"      {printf("Reserved word: %s\n", yytext); return ELSE;}
 "read"      {printf("Reserved word: %s\n", yytext); return READ;}
 "print"     {printf("Reserved word: %s\n", yytext); return PRINT;}
 
@@ -42,7 +43,7 @@ CHAR_CONST        \'[a-zA-Z0-9_]\'
 {CHAR_CONST} {printf("Character: %s\n", yytext); return CHAR_CONST;}
 
 [ \t]+      {}
-[\n]+       {currentLine++;}
+[\n]+       { currentLine++; }
 
 [0-9_][a-zA-Z0-9_]*  {printf("Illegal identifier at line %d\n", currentLine); return -1;}
 [+-]0             {printf("Illegal numeric constant at line %d\n", currentLine); return -1;}

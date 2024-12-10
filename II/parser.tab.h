@@ -70,11 +70,11 @@ extern int yydebug;
     RIGHT_CURLY_BRACKET = 271,     /* RIGHT_CURLY_BRACKET  */
     SEMICOLON = 272,               /* SEMICOLON  */
     IF = 273,                      /* IF  */
-    READ = 274,                    /* READ  */
-    PRINT = 275,                   /* PRINT  */
-    ASSIGN = 276,                  /* ASSIGN  */
-    ERROR = 277,                   /* ERROR  */
-    DECLARATION_ERROR = 278,       /* DECLARATION_ERROR  */
+    ELSE = 274,                    /* ELSE  */
+    READ = 275,                    /* READ  */
+    PRINT = 276,                   /* PRINT  */
+    ASSIGN = 277,                  /* ASSIGN  */
+    ERROR = 278,                   /* ERROR  */
     GREATER_THAN = 279,            /* GREATER_THAN  */
     LESS_THAN = 280                /* LESS_THAN  */
   };
