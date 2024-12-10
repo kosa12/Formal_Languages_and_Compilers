@@ -18,15 +18,12 @@ class VeremAutomata:
             if not maradek_szo and (aktualis_allapot in self.vegallapotok or not aktualis_verem):
                 return True
 
-            # Következő karakter a bemenetből, ha van ilyen
             kovetkezo_karakter = maradek_szo[0] if maradek_szo else None
             verem_teteje = aktualis_verem[-1] if aktualis_verem else None
 
-            # Lehetséges átmenetek lekérdezése a jelenlegi állapottal, bemeneti szimbólummal és verem tetejével
-            lehetseges_atmenetek = self.atmenetek.get((aktualis_allapot, kovetkezo_karakter, verem_teteje), []) \
-                                   + self.atmenetek.get((aktualis_allapot, None, verem_teteje), [])
+            lehetseges_atmenetek = self.atmenetek.get((aktualis_allapot, kovetkezo_karakter, verem_teteje), []) + self.atmenetek.get((aktualis_allapot, None, verem_teteje), [])
+
             for uj_allapot, uj_verem_szimbolumok in lehetseges_atmenetek:
-                # Frissítjük a verem tartalmát az átmenet alapján
                 uj_verem = aktualis_verem[:-1] + (uj_verem_szimbolumok if uj_verem_szimbolumok != ["eps"] else [])
                 konfiguraciok.append((uj_allapot, maradek_szo[1:] if kovetkezo_karakter else maradek_szo, uj_verem))
 

@@ -17,7 +17,6 @@ class DFA:
                 return False
         return aktualis_allapot in self.elfogado_allapotok
 
-
 def betolt_dfa_fajlbol(fajlnev):
     with open(fajlnev, 'r') as fajl:
         sorok = fajl.readlines()
@@ -36,6 +35,9 @@ def betolt_dfa_fajlbol(fajlnev):
 
 
 def ekvivalensek_e(dfa1, dfa2):
+    if dfa1.abece != dfa2.abece:
+        return False
+
     def allapot_parok(dfa1, dfa2):
         return {(dfa1.kezdo_allapot, dfa2.kezdo_allapot)}
 

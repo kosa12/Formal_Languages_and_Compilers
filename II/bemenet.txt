@@ -1,0 +1,14 @@
+int x;
+float y;
+int z + 3;
+
+x = 10;
+y = 3.14;
+z = x + y;
+
+if (x > y) {
+    print x;
+}
+
+read z;
+print z;
