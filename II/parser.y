@@ -3,11 +3,15 @@
 #include <stdlib.h>
 #include <string>
 #include <unordered_map>
+#include <stack>
 #include "parser.tab.hpp"
 
 extern "C" int yylex();
 extern int currentLine;
 void yyerror(const char *s);
+
+int shouldExecute = true;
+std::stack<bool> executionStack;
 
 struct Symbol {
     std::string type;
@@ -56,7 +60,11 @@ std::string getVariableType(const std::string& name) {
 
 bool checkTypeCompatibility(const std::string& type1, const std::string& type2, const std::string& operation) {
     if (type1 != type2) {
-        return false;
+        if((type1 == "int" && type2 == "float" && operation == "comparison") || (type1 == "float" && type2 == "int" && operation == "comparison")) {
+            return true;
+        } else {
+            return false;
+        }
     }
     return true;
 }
@@ -79,6 +87,18 @@ std::string getExpressionType(const std::string& identifier) {
     }
 }
 
+void pushExecutionState(bool newState) {
+    executionStack.push(shouldExecute);
+    shouldExecute = newState;
+}
+
+void popExecutionState() {
+    if (!executionStack.empty()) {
+        shouldExecute = executionStack.top();
+        executionStack.pop();
+    }
+}
+
 %}
 
 %union {
@@ -86,6 +106,7 @@ std::string getExpressionType(const std::string& identifier) {
     float floatval;
     std::string* strval;
     char charval;
+    bool boolval;
 }
 
 %token <intval> INT_CONST INT
@@ -107,6 +128,9 @@ std::string getExpressionType(const std::string& identifier) {
 %left MUL DIVISION
 %left GREATER_THAN LESS_THAN
 %right ASSIGN
+%nonassoc IF
+%nonassoc IF_THEN
+%nonassoc ELSE
 
 %define parse.error verbose
 
@@ -172,47 +196,46 @@ type:
 
 assignment:
     IDENTIFIER ASSIGN expression SEMICOLON {
-        checkVariable(*$1);
-        std::string varName = *$1;
-        std::string varType = getVariableType(varName);
-        std::string exprType = getExpressionType($3);
+        if (shouldExecute) {
+            checkVariable(*$1);
+            std::string varName = *$1;
+            std::string varType = getVariableType(varName);
+            std::string exprType = getExpressionType($3);
 
-        if (!checkTypeCompatibility(varType, exprType, "assignment")) {
-            yyerror(("Type mismatch in assignment: " + varType + " and " + exprType).c_str());
-        } else {
-            if (varType == "int") {
-                symbolTable[varName].value.intval = $3;
-            } else if (varType == "float") {
-                symbolTable[varName].value.floatval = $3;
-            } else if (varType == "char") {
-                symbolTable[varName].value.charval = $3;
-            } else if (varType == "string") {
-                yyerror("String assignment not yet implemented.");
+            if (!checkTypeCompatibility(varType, exprType, "assignment")) {
+                yyerror(("Type mismatch in assignment: " + varType + " and " + exprType).c_str());
             } else {
-                yyerror(("Unknown type for variable: " + varName).c_str());
+                if (varType == "int") {
+                    symbolTable[varName].value.intval = $3;
+                } else if (varType == "float") {
+                    symbolTable[varName].value.floatval = $3;
+                } else if (varType == "char") {
+                    symbolTable[varName].value.charval = $3;
+                } else if (varType == "string") {
+                    yyerror("String assignment not yet implemented.");
+                }
             }
         }
     }
-    | IDENTIFIER ASSIGN error SEMICOLON { yyerror("Error in assignment expression."); }
     ;
 
 print_stmt:
     PRINT IDENTIFIER SEMICOLON {
-        checkVariable(*$2);
-        std::string varName = *$2;
-        std::string varType = getVariableType(varName);
+        if (shouldExecute) {
+            checkVariable(*$2);
+            std::string varName = *$2;
+            std::string varType = getVariableType(varName);
 
-        if (varType == "int") {
-            printf("%s = %d\n", varName.c_str(), symbolTable[varName].value.intval);
-        } else if (varType == "float") {
-            printf("%s = %f\n", varName.c_str(), symbolTable[varName].value.floatval);
-        } else if (varType == "char") {
-            printf("%s = %c\n", varName.c_str(), symbolTable[varName].value.charval);
-        } else if (varType == "string") {
-            printf("%s = %s\n", varName.c_str(), symbolTable[varName].value.strval->c_str());
-        } else {
-            yyerror(("Unknown type for variable: " + varName).c_str());
-        }
+            if (varType == "int") {
+                printf("%s = %d\n", varName.c_str(), symbolTable[varName].value.intval);
+            } else if (varType == "float") {
+                printf("%s = %f\n", varName.c_str(), symbolTable[varName].value.floatval);
+            } else if (varType == "char") {
+                printf("%s = %c\n", varName.c_str(), symbolTable[varName].value.charval);
+            } else if (varType == "string") {
+                printf("%s = %s\n", varName.c_str(), symbolTable[varName].value.strval->c_str());
+            }
+        } 
     }
     ;
 
@@ -223,9 +246,22 @@ read_stmt:
     ;
 
 if_stmt:
-    IF LEFT_ROUND_BRACKET expression RIGHT_ROUND_BRACKET LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET
-    | IF LEFT_ROUND_BRACKET expression RIGHT_ROUND_BRACKET LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET ELSE LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET
-    | IF LEFT_ROUND_BRACKET error RIGHT_ROUND_BRACKET LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET { yyerror("Error recovered in if statement"); }
+    IF LEFT_ROUND_BRACKET expression RIGHT_ROUND_BRACKET %prec IF_THEN {
+        pushExecutionState($3 != 0.0f);
+    }
+    if_body
+    ;
+
+if_body:
+    LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET {
+        popExecutionState();
+    }
+    | LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET ELSE {
+        pushExecutionState(!shouldExecute);
+    }
+    LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET {
+        popExecutionState();
+    }
     ;
 
 while_stmt:
@@ -250,8 +286,10 @@ expression:
         }
     }
     | expression GREATER_THAN term {
+
         if (checkTypeCompatibility(getExpressionType($1), getExpressionType($3), "comparison")) {
             $$ = $1 > $3;
+            fflush(stdout);
         } else {
             $$ = 0;
         }
@@ -259,6 +297,7 @@ expression:
     | expression LESS_THAN term {
         if (checkTypeCompatibility(getExpressionType($1), getExpressionType($3), "comparison")) {
             $$ = $1 < $3;
+            fflush(stdout);
         } else {
             $$ = 0;
         }

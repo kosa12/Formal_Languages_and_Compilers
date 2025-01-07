@@ -80,7 +80,8 @@ extern int yydebug;
     WHILE = 281,                   /* WHILE  */
     ERROR = 282,                   /* ERROR  */
     GREATER_THAN = 283,            /* GREATER_THAN  */
-    LESS_THAN = 284                /* LESS_THAN  */
+    LESS_THAN = 284,               /* LESS_THAN  */
+    IF_THEN = 285                  /* IF_THEN  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -89,14 +90,15 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 84 "parser.y"
+#line 104 "parser.y"
 
     int intval;
     float floatval;
     std::string* strval;
     char charval;
+    bool boolval;
 
-#line 100 "parser.tab.hpp"
+#line 102 "parser.tab.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

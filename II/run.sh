@@ -7,11 +7,10 @@ fi
 
 
 echo "Running Bison..."
-bison -d -Wcounterexamples -o parser.tab.cpp parser.y
+bison -d -v -Wcounterexamples -o parser.tab.cpp parser.y
 
 echo "Running Flex..."
 flex -o lex.yy.cpp lexer.l
-
 
 echo "Compiling..."
 g++ -o parser parser.tab.cpp lex.yy.cpp -lfl
