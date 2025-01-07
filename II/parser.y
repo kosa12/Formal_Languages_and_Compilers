@@ -58,17 +58,12 @@ bool checkTypeCompatibility(const std::string& type1, const std::string& type2, 
     if (type1 != type2) {
         return false;
     }
-    return true; 
+    return true;
 }
 
 std::string getExpressionType(float value) {
     if (value == static_cast<int>(value)) {
-        std::string valueStr = std::to_string(value);
-        if (valueStr.find('.') != std::string::npos) {
-            return "float";
-        } else {
-            return "int";
-        }
+        return "int";
     } else {
         return "float";
     }
@@ -93,11 +88,10 @@ std::string getExpressionType(const std::string& identifier) {
     char charval;
 }
 
-%token <intval> INT_CONST
+%token <intval> INT_CONST INT
 %token <floatval> FLOAT_CONST FLOAT
 %token <strval> STRING_CONST IDENTIFIER
 %token <charval> CHAR
-%token <intval> INT
 %token <strval> CHAR_CONST STRING
 %token PLUS MINUS MUL DIVISION
 %token LEFT_ROUND_BRACKET RIGHT_ROUND_BRACKET LEFT_CURLY_BRACKET RIGHT_CURLY_BRACKET SEMICOLON
@@ -185,7 +179,6 @@ assignment:
 
         if (!checkTypeCompatibility(varType, exprType, "assignment")) {
             yyerror(("Type mismatch in assignment: " + varType + " and " + exprType).c_str());
-
         } else {
             if (varType == "int") {
                 symbolTable[varName].value.intval = $3;
@@ -244,6 +237,7 @@ expression:
         if (checkTypeCompatibility(getExpressionType($1), getExpressionType($3), "addition")) {
             $$ = $1 + $3;
         } else {
+            yyerror(("Type mismatch in assignment: " + getExpressionType($1) + " and " + getExpressionType($3)).c_str());
             $$ = 0;
         }
     }
@@ -251,6 +245,7 @@ expression:
         if (checkTypeCompatibility(getExpressionType($1), getExpressionType($3), "subtraction")) {
             $$ = $1 - $3;
         } else {
+            yyerror(("Type mismatch in assignment: " + getExpressionType($1) + " and " + getExpressionType($3)).c_str());
             $$ = 0;
         }
     }
@@ -276,6 +271,7 @@ term:
         if (checkTypeCompatibility(getExpressionType($1), getExpressionType($3), "multiplication")) {
             $$ = $1 * $3;
         } else {
+            yyerror(("Type mismatch in assignment: " + getExpressionType($1) + " and " + getExpressionType($3)).c_str());
             $$ = 0;
         }
     }
@@ -283,6 +279,7 @@ term:
         if (checkTypeCompatibility(getExpressionType($1), getExpressionType($3), "division")) {
             $$ = $1 / $3;
         } else {
+            yyerror(("Type mismatch in assignment: " + getExpressionType($1) + " and " + getExpressionType($3)).c_str());
             $$ = 0;
         }
     }

@@ -1,15 +1,8 @@
 float y = 5.6;
-float x = 10.2;
+int j = 9;
 
-float z = x + y;
+print j;
 
-z = 1.0 + z;
-
-if(z > 10) {
-    print z;
-} else {
-    print x;
+if(j < 6) {
+    print y;
 }
-
-
-print z;

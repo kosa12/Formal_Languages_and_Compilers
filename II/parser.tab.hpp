@@ -55,12 +55,12 @@ extern int yydebug;
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
     INT_CONST = 258,               /* INT_CONST  */
-    FLOAT_CONST = 259,             /* FLOAT_CONST  */
-    FLOAT = 260,                   /* FLOAT  */
-    STRING_CONST = 261,            /* STRING_CONST  */
-    IDENTIFIER = 262,              /* IDENTIFIER  */
-    CHAR = 263,                    /* CHAR  */
-    INT = 264,                     /* INT  */
+    INT = 259,                     /* INT  */
+    FLOAT_CONST = 260,             /* FLOAT_CONST  */
+    FLOAT = 261,                   /* FLOAT  */
+    STRING_CONST = 262,            /* STRING_CONST  */
+    IDENTIFIER = 263,              /* IDENTIFIER  */
+    CHAR = 264,                    /* CHAR  */
     CHAR_CONST = 265,              /* CHAR_CONST  */
     STRING = 266,                  /* STRING  */
     PLUS = 267,                    /* PLUS  */
@@ -89,7 +89,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 89 "parser.y"
+#line 84 "parser.y"
 
     int intval;
     float floatval;

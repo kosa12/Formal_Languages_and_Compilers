@@ -25,7 +25,7 @@ CHAR_CONST        \'[a-zA-Z0-9_]\'
 
 "int"       { /*printf("Reserved word: %s\n", yytext);*/ return INT; }
 "float"     { /*printf("Reserved word: %s\n", yytext);*/ return FLOAT; }
-"char"      { return CHAR; } 
+"char"      { return CHAR; }
 "string"    { return STRING; }
 "if"        { /*printf("Reserved word: %s\n", yytext);*/ return IF; }
 "else"      { /*printf("Reserved word: %s\n", yytext);*/ return ELSE; }
