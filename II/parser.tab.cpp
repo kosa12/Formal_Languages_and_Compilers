@@ -71,14 +71,86 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include "parser.tab.h"
+#include <string>
+#include <unordered_map>
+#include "parser.tab.hpp"
 
-extern int yylex();
+extern "C" int yylex();
 extern int currentLine;
 void yyerror(const char *s);
 
-#line 82 "parser.tab.c"
+struct Symbol {
+    std::string type;
+    union {
+        int intval;
+        float floatval;
+        char charval;
+        std::string* strval;
+    } value;
+};
+
+std::unordered_map<std::string, Symbol> symbolTable;
+
+void declareVariable(const std::string& name, const std::string& type) {
+    auto it = symbolTable.find(name);
+    if (it != symbolTable.end()) {
+        yyerror(("Redeclaration of variable: " + name).c_str());
+    } else {
+        Symbol sym;
+        sym.type = type;
+        if (type == "int") {
+            sym.value.intval = 0;
+        } else if (type == "float") {
+            sym.value.floatval = 0.0f;
+        } else if (type == "char") {
+            sym.value.charval = '\0';
+        } else if (type == "string") {
+            sym.value.strval = new std::string();
+        }
+        symbolTable[name] = sym;
+    }
+}
+
+void checkVariable(const std::string& name) {
+    if (symbolTable.find(name) == symbolTable.end()) {
+        yyerror(("Undeclared variable: " + name).c_str());
+    }
+}
+
+std::string getVariableType(const std::string& name) {
+    if (symbolTable.find(name) != symbolTable.end()) {
+        return symbolTable[name].type;
+    }
+    return "";
+}
+
+bool checkTypeCompatibility(const std::string& type1, const std::string& type2, const std::string& operation) {
+    if (type1 != type2) {
+        return false;
+    }
+    return true; 
+}
+
+std::string getExpressionType(float value) {
+    if (value == static_cast<int>(value)) {
+        return "int";
+    } else {
+        return "float";
+    }
+}
+
+std::string getExpressionType(const std::string& identifier) {
+    auto it = symbolTable.find(identifier);
+    if (it != symbolTable.end()) {
+        return it->second.type;
+    } else {
+        yyerror(("Undeclared variable: " + identifier).c_str());
+        return "";
+    }
+}
+
+
+#line 154 "parser.tab.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -101,7 +173,7 @@ void yyerror(const char *s);
 #  endif
 # endif
 
-#include "parser.tab.h"
+#include "parser.tab.hpp"
 /* Symbol kind.  */
 enum yysymbol_kind_t
 {
@@ -109,42 +181,47 @@ enum yysymbol_kind_t
   YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
   YYSYMBOL_YYerror = 1,                    /* error  */
   YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
-  YYSYMBOL_NUMBER_CONST = 3,               /* NUMBER_CONST  */
-  YYSYMBOL_STRING_CONST = 4,               /* STRING_CONST  */
-  YYSYMBOL_IDENTIFIER = 5,                 /* IDENTIFIER  */
-  YYSYMBOL_INT = 6,                        /* INT  */
-  YYSYMBOL_FLOAT = 7,                      /* FLOAT  */
-  YYSYMBOL_CHAR_CONST = 8,                 /* CHAR_CONST  */
-  YYSYMBOL_PLUS = 9,                       /* PLUS  */
-  YYSYMBOL_MINUS = 10,                     /* MINUS  */
-  YYSYMBOL_MUL = 11,                       /* MUL  */
-  YYSYMBOL_DIVISION = 12,                  /* DIVISION  */
-  YYSYMBOL_LEFT_ROUND_BRACKET = 13,        /* LEFT_ROUND_BRACKET  */
-  YYSYMBOL_RIGHT_ROUND_BRACKET = 14,       /* RIGHT_ROUND_BRACKET  */
-  YYSYMBOL_LEFT_CURLY_BRACKET = 15,        /* LEFT_CURLY_BRACKET  */
-  YYSYMBOL_RIGHT_CURLY_BRACKET = 16,       /* RIGHT_CURLY_BRACKET  */
-  YYSYMBOL_SEMICOLON = 17,                 /* SEMICOLON  */
-  YYSYMBOL_IF = 18,                        /* IF  */
-  YYSYMBOL_ELSE = 19,                      /* ELSE  */
-  YYSYMBOL_READ = 20,                      /* READ  */
-  YYSYMBOL_PRINT = 21,                     /* PRINT  */
-  YYSYMBOL_ASSIGN = 22,                    /* ASSIGN  */
-  YYSYMBOL_ERROR = 23,                     /* ERROR  */
-  YYSYMBOL_GREATER_THAN = 24,              /* GREATER_THAN  */
-  YYSYMBOL_LESS_THAN = 25,                 /* LESS_THAN  */
-  YYSYMBOL_YYACCEPT = 26,                  /* $accept  */
-  YYSYMBOL_program = 27,                   /* program  */
-  YYSYMBOL_statements = 28,                /* statements  */
-  YYSYMBOL_statement = 29,                 /* statement  */
-  YYSYMBOL_declaration = 30,               /* declaration  */
-  YYSYMBOL_type = 31,                      /* type  */
-  YYSYMBOL_assignment = 32,                /* assignment  */
-  YYSYMBOL_print_stmt = 33,                /* print_stmt  */
-  YYSYMBOL_read_stmt = 34,                 /* read_stmt  */
-  YYSYMBOL_if_stmt = 35,                   /* if_stmt  */
-  YYSYMBOL_expression = 36,                /* expression  */
-  YYSYMBOL_term = 37,                      /* term  */
-  YYSYMBOL_factor = 38                     /* factor  */
+  YYSYMBOL_INT_CONST = 3,                  /* INT_CONST  */
+  YYSYMBOL_FLOAT_CONST = 4,                /* FLOAT_CONST  */
+  YYSYMBOL_FLOAT = 5,                      /* FLOAT  */
+  YYSYMBOL_STRING_CONST = 6,               /* STRING_CONST  */
+  YYSYMBOL_IDENTIFIER = 7,                 /* IDENTIFIER  */
+  YYSYMBOL_CHAR = 8,                       /* CHAR  */
+  YYSYMBOL_INT = 9,                        /* INT  */
+  YYSYMBOL_CHAR_CONST = 10,                /* CHAR_CONST  */
+  YYSYMBOL_STRING = 11,                    /* STRING  */
+  YYSYMBOL_PLUS = 12,                      /* PLUS  */
+  YYSYMBOL_MINUS = 13,                     /* MINUS  */
+  YYSYMBOL_MUL = 14,                       /* MUL  */
+  YYSYMBOL_DIVISION = 15,                  /* DIVISION  */
+  YYSYMBOL_LEFT_ROUND_BRACKET = 16,        /* LEFT_ROUND_BRACKET  */
+  YYSYMBOL_RIGHT_ROUND_BRACKET = 17,       /* RIGHT_ROUND_BRACKET  */
+  YYSYMBOL_LEFT_CURLY_BRACKET = 18,        /* LEFT_CURLY_BRACKET  */
+  YYSYMBOL_RIGHT_CURLY_BRACKET = 19,       /* RIGHT_CURLY_BRACKET  */
+  YYSYMBOL_SEMICOLON = 20,                 /* SEMICOLON  */
+  YYSYMBOL_IF = 21,                        /* IF  */
+  YYSYMBOL_ELSE = 22,                      /* ELSE  */
+  YYSYMBOL_READ = 23,                      /* READ  */
+  YYSYMBOL_PRINT = 24,                     /* PRINT  */
+  YYSYMBOL_ASSIGN = 25,                    /* ASSIGN  */
+  YYSYMBOL_WHILE = 26,                     /* WHILE  */
+  YYSYMBOL_ERROR = 27,                     /* ERROR  */
+  YYSYMBOL_GREATER_THAN = 28,              /* GREATER_THAN  */
+  YYSYMBOL_LESS_THAN = 29,                 /* LESS_THAN  */
+  YYSYMBOL_YYACCEPT = 30,                  /* $accept  */
+  YYSYMBOL_program = 31,                   /* program  */
+  YYSYMBOL_statements = 32,                /* statements  */
+  YYSYMBOL_statement = 33,                 /* statement  */
+  YYSYMBOL_declaration = 34,               /* declaration  */
+  YYSYMBOL_type = 35,                      /* type  */
+  YYSYMBOL_assignment = 36,                /* assignment  */
+  YYSYMBOL_print_stmt = 37,                /* print_stmt  */
+  YYSYMBOL_read_stmt = 38,                 /* read_stmt  */
+  YYSYMBOL_if_stmt = 39,                   /* if_stmt  */
+  YYSYMBOL_while_stmt = 40,                /* while_stmt  */
+  YYSYMBOL_expression = 41,                /* expression  */
+  YYSYMBOL_term = 42,                      /* term  */
+  YYSYMBOL_factor = 43                     /* factor  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -470,21 +547,21 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  29
+#define YYFINAL  25
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   104
+#define YYLAST   145
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  26
+#define YYNTOKENS  30
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  13
+#define YYNNTS  14
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  33
+#define YYNRULES  37
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  64
+#define YYNSTATES  78
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   280
+#define YYMAXUTOK   284
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -526,17 +603,17 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25
+      25,    26,    27,    28,    29
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_int8 yyrline[] =
+static const yytype_int16 yyrline[] =
 {
-       0,    40,    40,    44,    45,    46,    50,    51,    52,    53,
-      54,    58,    59,    63,    64,    68,    72,    76,    80,    81,
-      82,    86,    87,    88,    89,    90,    94,    95,    96,   100,
-     101,   102,   103,   104
+       0,   117,   117,   121,   122,   126,   127,   128,   129,   130,
+     131,   135,   139,   165,   169,   170,   171,   172,   176,   201,
+     205,   225,   231,   232,   233,   237,   241,   248,   255,   262,
+     269,   273,   280,   287,   292,   293,   294,   311
 };
 #endif
 
@@ -552,14 +629,15 @@ static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "\"end of file\"", "error", "\"invalid token\"", "NUMBER_CONST",
-  "STRING_CONST", "IDENTIFIER", "INT", "FLOAT", "CHAR_CONST", "PLUS",
-  "MINUS", "MUL", "DIVISION", "LEFT_ROUND_BRACKET", "RIGHT_ROUND_BRACKET",
-  "LEFT_CURLY_BRACKET", "RIGHT_CURLY_BRACKET", "SEMICOLON", "IF", "ELSE",
-  "READ", "PRINT", "ASSIGN", "ERROR", "GREATER_THAN", "LESS_THAN",
-  "$accept", "program", "statements", "statement", "declaration", "type",
-  "assignment", "print_stmt", "read_stmt", "if_stmt", "expression", "term",
-  "factor", YY_NULLPTR
+  "\"end of file\"", "error", "\"invalid token\"", "INT_CONST",
+  "FLOAT_CONST", "FLOAT", "STRING_CONST", "IDENTIFIER", "CHAR", "INT",
+  "CHAR_CONST", "STRING", "PLUS", "MINUS", "MUL", "DIVISION",
+  "LEFT_ROUND_BRACKET", "RIGHT_ROUND_BRACKET", "LEFT_CURLY_BRACKET",
+  "RIGHT_CURLY_BRACKET", "SEMICOLON", "IF", "ELSE", "READ", "PRINT",
+  "ASSIGN", "WHILE", "ERROR", "GREATER_THAN", "LESS_THAN", "$accept",
+  "program", "statements", "statement", "declaration", "type",
+  "assignment", "print_stmt", "read_stmt", "if_stmt", "while_stmt",
+  "expression", "term", "factor", YY_NULLPTR
 };
 
 static const char *
@@ -569,12 +647,12 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-42)
+#define YYPACT_NINF (-57)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
 
-#define YYTABLE_NINF (-3)
+#define YYTABLE_NINF (-1)
 
 #define yytable_value_is_error(Yyn) \
   0
@@ -583,13 +661,14 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      41,   -14,    -1,   -42,   -42,     0,    18,    91,    26,     4,
-     -42,   -42,    25,   -42,   -42,   -42,   -42,   -42,    91,    91,
-      21,   -42,   -42,   -42,   -42,    91,    47,    -5,   -42,   -42,
-     -42,   -42,    -3,    56,    60,   -42,    68,    91,    91,   -42,
-      91,    91,    91,    91,   -42,    91,   -42,    30,   -42,    -5,
-      -5,    -5,    -5,   -42,   -42,    66,    41,   -42,    11,    32,
-      43,    41,    34,   -42
+      84,   -57,    -8,   -57,   -57,   -57,     5,    20,    22,    28,
+      47,    84,   -57,   -57,    42,   -57,   -57,   -57,   -57,   -57,
+      36,    93,    48,    50,    38,   -57,   -57,     0,    57,   -57,
+     -57,   -57,    38,    86,    41,   -57,    44,    -6,   -57,   -57,
+      99,   -57,   -57,    38,   -57,   105,    38,    38,   -57,    38,
+      38,    38,    38,    49,    62,    66,   111,   -57,    41,    41,
+      41,    41,   -57,   -57,    84,    84,    84,   -57,     7,    27,
+      55,   -57,    60,   -57,    68,    84,    64,   -57
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -597,27 +676,28 @@ static const yytype_int8 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,    20,     0,    13,    14,     0,     0,     0,     0,     0,
-       3,     6,     0,     7,     8,     9,    10,     5,     0,     0,
-       0,    29,    31,    30,    32,     0,     0,    25,    28,     1,
-      20,     4,     0,     0,     0,    17,     0,     0,     0,    16,
-       0,     0,     0,     0,    11,     0,    15,     0,    33,    21,
-      22,    23,    24,    26,    27,     0,     0,    12,     0,    18,
-       0,     0,     0,    19
+       0,    15,     0,    16,    14,    17,     0,     0,     0,     0,
+       0,     2,     3,     5,     0,     6,     7,     8,     9,    10,
+       0,     0,     0,     0,     0,     1,     4,     0,     0,    34,
+      35,    36,     0,     0,    30,    33,     0,     0,    21,    20,
+       0,    13,    11,     0,    19,     0,     0,     0,    18,     0,
+       0,     0,     0,     0,     0,     0,     0,    37,    26,    27,
+      28,    29,    31,    32,     0,     0,     0,    12,     0,     0,
+       0,    24,    22,    25,     0,     0,     0,    23
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -42,   -42,   -41,    -9,   -42,   -42,   -42,   -42,   -42,   -42,
-     -17,    -4,     1
+     -57,   -57,   -56,   -11,   -57,   -57,   -57,   -57,   -57,   -57,
+     -57,   -19,    95,   -48
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     8,     9,    10,    11,    12,    13,    14,    15,    16,
-      26,    27,    28
+       0,    10,    11,    12,    13,    14,    15,    16,    17,    18,
+      19,    33,    34,    35
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -625,63 +705,72 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      31,    33,    34,    17,    -2,    30,    42,    43,    36,     2,
-       3,     4,    30,    19,    44,    58,     2,     3,     4,    45,
-      62,    18,     5,    20,     6,     7,    29,    59,    55,     5,
-      32,     6,     7,    49,    50,    30,    51,    52,    35,     2,
-       3,     4,     1,    53,    54,    56,     2,     3,     4,    31,
-      63,    60,     5,    31,     6,     7,    37,    38,    61,     5,
-       0,     6,     7,     0,    39,    37,    38,     0,     0,    37,
-      38,    40,    41,    46,    47,    37,    38,    37,    38,     0,
-      40,    41,    48,    57,    40,    41,     0,     0,     0,     0,
-      40,    41,    40,    41,    21,    22,    23,     0,     0,    24,
-       0,     0,     0,     0,    25
+      26,    41,    37,    62,    63,    40,    46,    47,    68,    69,
+      70,    54,     1,    45,     2,     3,     4,    20,     5,    76,
+      42,    21,    49,    50,    56,    43,    71,    22,     6,    23,
+       7,     8,     1,     9,     2,     3,     4,    28,     5,    29,
+      30,    29,    30,    31,    24,    31,    72,    25,     6,    27,
+       7,     8,    32,     9,    32,    51,    52,    26,    26,    26,
+       1,    53,     2,     3,     4,    26,     5,    64,    38,     1,
+      39,     2,     3,     4,    73,     5,     6,    44,     7,     8,
+      65,     9,    74,    77,    66,     6,    75,     7,     8,     1,
+       9,     2,     3,     4,    36,     5,    29,    30,    46,    47,
+      31,     0,     0,     0,     0,     6,    48,     7,     8,    32,
+       9,    46,    47,     0,    49,    50,    55,    46,    47,     0,
+       0,     0,    57,    46,    47,     0,     0,    49,    50,     0,
+       0,    67,     0,    49,    50,     0,     0,     0,     0,    49,
+      50,    58,    59,     0,    60,    61
 };
 
 static const yytype_int8 yycheck[] =
 {
-       9,    18,    19,    17,     0,     1,    11,    12,    25,     5,
-       6,     7,     1,    13,    17,    56,     5,     6,     7,    22,
-      61,    22,    18,     5,    20,    21,     0,    16,    45,    18,
-       5,    20,    21,    37,    38,     1,    40,    41,    17,     5,
-       6,     7,     1,    42,    43,    15,     5,     6,     7,    58,
-      16,    19,    18,    62,    20,    21,     9,    10,    15,    18,
-      -1,    20,    21,    -1,    17,     9,    10,    -1,    -1,     9,
-      10,    24,    25,    17,    14,     9,    10,     9,    10,    -1,
-      24,    25,    14,    17,    24,    25,    -1,    -1,    -1,    -1,
-      24,    25,    24,    25,     3,     4,     5,    -1,    -1,     8,
-      -1,    -1,    -1,    -1,    13
+      11,     1,    21,    51,    52,    24,    12,    13,    64,    65,
+      66,    17,     5,    32,     7,     8,     9,    25,    11,    75,
+      20,    16,    28,    29,    43,    25,    19,     7,    21,     7,
+      23,    24,     5,    26,     7,     8,     9,     1,    11,     3,
+       4,     3,     4,     7,    16,     7,    19,     0,    21,     7,
+      23,    24,    16,    26,    16,    14,    15,    68,    69,    70,
+       5,    17,     7,     8,     9,    76,    11,    18,    20,     5,
+      20,     7,     8,     9,    19,    11,    21,    20,    23,    24,
+      18,    26,    22,    19,    18,    21,    18,    23,    24,     5,
+      26,     7,     8,     9,     1,    11,     3,     4,    12,    13,
+       7,    -1,    -1,    -1,    -1,    21,    20,    23,    24,    16,
+      26,    12,    13,    -1,    28,    29,    17,    12,    13,    -1,
+      -1,    -1,    17,    12,    13,    -1,    -1,    28,    29,    -1,
+      -1,    20,    -1,    28,    29,    -1,    -1,    -1,    -1,    28,
+      29,    46,    47,    -1,    49,    50
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     1,     5,     6,     7,    18,    20,    21,    27,    28,
-      29,    30,    31,    32,    33,    34,    35,    17,    22,    13,
-       5,     3,     4,     5,     8,    13,    36,    37,    38,     0,
-       1,    29,     5,    36,    36,    17,    36,     9,    10,    17,
-      24,    25,    11,    12,    17,    22,    17,    14,    14,    37,
-      37,    37,    37,    38,    38,    36,    15,    17,    28,    16,
-      19,    15,    28,    16
+       0,     5,     7,     8,     9,    11,    21,    23,    24,    26,
+      31,    32,    33,    34,    35,    36,    37,    38,    39,    40,
+      25,    16,     7,     7,    16,     0,    33,     7,     1,     3,
+       4,     7,    16,    41,    42,    43,     1,    41,    20,    20,
+      41,     1,    20,    25,    20,    41,    12,    13,    20,    28,
+      29,    14,    15,    17,    17,    17,    41,    17,    42,    42,
+      42,    42,    43,    43,    18,    18,    18,    20,    32,    32,
+      32,    19,    19,    19,    22,    18,    32,    19
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    26,    27,    28,    28,    28,    29,    29,    29,    29,
-      29,    30,    30,    31,    31,    32,    33,    34,    35,    35,
-      35,    36,    36,    36,    36,    36,    37,    37,    37,    38,
-      38,    38,    38,    38
+       0,    30,    31,    32,    32,    33,    33,    33,    33,    33,
+      33,    34,    34,    34,    35,    35,    35,    35,    36,    36,
+      37,    38,    39,    39,    39,    40,    41,    41,    41,    41,
+      41,    42,    42,    42,    43,    43,    43,    43
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     1,     1,     2,     2,     1,     1,     1,     1,
-       1,     3,     5,     1,     1,     4,     3,     3,     7,    11,
-       1,     3,     3,     3,     3,     1,     3,     3,     1,     1,
-       1,     1,     1,     3
+       0,     2,     1,     1,     2,     1,     1,     1,     1,     1,
+       1,     3,     5,     3,     1,     1,     1,     1,     4,     4,
+       3,     3,     7,    11,     7,     7,     3,     3,     3,     3,
+       1,     3,     3,     1,     1,     1,     1,     3
 };
 
 
@@ -1414,86 +1503,274 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-  case 5: /* statements: error SEMICOLON  */
-#line 46 "parser.y"
-                      { yyerror("Error recovered at statement level"); }
-#line 1421 "parser.tab.c"
+  case 11: /* declaration: type IDENTIFIER SEMICOLON  */
+#line 135 "parser.y"
+                              {
+        declareVariable(*(yyvsp[-1].strval), *(yyvsp[-2].strval));
+        delete (yyvsp[-2].strval);
+    }
+#line 1513 "parser.tab.cpp"
     break;
 
-  case 20: /* if_stmt: error  */
-#line 82 "parser.y"
-            { yyerror("Error recovered in if statement"); }
-#line 1427 "parser.tab.c"
+  case 12: /* declaration: type IDENTIFIER ASSIGN expression SEMICOLON  */
+#line 139 "parser.y"
+                                                  {
+        declareVariable(*(yyvsp[-3].strval), *(yyvsp[-4].strval));
+
+        std::string varName = *(yyvsp[-3].strval);
+        std::string varType = getVariableType(varName);
+        std::string exprType = getExpressionType((yyvsp[-1].floatval));
+
+        if (!checkTypeCompatibility(varType, exprType, "declaration")) {
+            yyerror(("Type mismatch in declaration: " + varType + " and " + exprType).c_str());
+        } else {
+            // Perform the assignment
+            if (varType == "int") {
+                symbolTable[varName].value.intval = (yyvsp[-1].floatval);
+            } else if (varType == "float") {
+                symbolTable[varName].value.floatval = (yyvsp[-1].floatval);
+            } else if (varType == "char") {
+                symbolTable[varName].value.charval = (yyvsp[-1].floatval);
+            } else if (varType == "string") {
+                yyerror("String assignment not yet implemented.");
+            } else {
+                yyerror(("Unknown type for variable: " + varName).c_str());
+            }
+        }
+
+        delete (yyvsp[-4].strval);
+    }
+#line 1544 "parser.tab.cpp"
     break;
 
-  case 21: /* expression: expression PLUS term  */
-#line 86 "parser.y"
-                         { (yyval.intval) = (yyvsp[-2].intval) + (yyvsp[0].intval); }
-#line 1433 "parser.tab.c"
+  case 13: /* declaration: type IDENTIFIER error  */
+#line 165 "parser.y"
+                            { yyerror("Error recovered at declaration level"); }
+#line 1550 "parser.tab.cpp"
     break;
 
-  case 22: /* expression: expression MINUS term  */
-#line 87 "parser.y"
-                            { (yyval.intval) = (yyvsp[-2].intval) - (yyvsp[0].intval); }
-#line 1439 "parser.tab.c"
+  case 14: /* type: INT  */
+#line 169 "parser.y"
+        { (yyval.strval) = new std::string("int"); }
+#line 1556 "parser.tab.cpp"
     break;
 
-  case 23: /* expression: expression GREATER_THAN term  */
-#line 88 "parser.y"
-                                   { (yyval.intval) = (yyvsp[-2].intval) > (yyvsp[0].intval); }
-#line 1445 "parser.tab.c"
+  case 15: /* type: FLOAT  */
+#line 170 "parser.y"
+            { (yyval.strval) = new std::string("float"); }
+#line 1562 "parser.tab.cpp"
     break;
 
-  case 24: /* expression: expression LESS_THAN term  */
-#line 89 "parser.y"
-                                { (yyval.intval) = (yyvsp[-2].intval) < (yyvsp[0].intval); }
-#line 1451 "parser.tab.c"
+  case 16: /* type: CHAR  */
+#line 171 "parser.y"
+           { (yyval.strval) = new std::string("char"); }
+#line 1568 "parser.tab.cpp"
     break;
 
-  case 26: /* term: term MUL factor  */
-#line 94 "parser.y"
-                    { (yyval.intval) = (yyvsp[-2].intval) * (yyvsp[0].intval); }
-#line 1457 "parser.tab.c"
+  case 17: /* type: STRING  */
+#line 172 "parser.y"
+             { (yyval.strval) = new std::string("string"); }
+#line 1574 "parser.tab.cpp"
     break;
 
-  case 27: /* term: term DIVISION factor  */
-#line 95 "parser.y"
-                           { (yyval.intval) = (yyvsp[-2].intval) / (yyvsp[0].intval); }
-#line 1463 "parser.tab.c"
+  case 18: /* assignment: IDENTIFIER ASSIGN expression SEMICOLON  */
+#line 176 "parser.y"
+                                           {
+        checkVariable(*(yyvsp[-3].strval));
+        std::string varName = *(yyvsp[-3].strval);
+        std::string varType = getVariableType(varName);
+        std::string exprType = getExpressionType((yyvsp[-1].floatval));
+
+        // Check if the type of the expression matches the variable type
+        if (!checkTypeCompatibility(varType, exprType, "assignment")) {
+            // If types are incompatible, skip the assignment
+            yyerror(("Type mismatch in assignment: " + varType + " and " + exprType).c_str());
+        } else {
+            // Perform the assignment
+            if (varType == "int") {
+                symbolTable[varName].value.intval = (yyvsp[-1].floatval);
+            } else if (varType == "float") {
+                symbolTable[varName].value.floatval = (yyvsp[-1].floatval);
+            } else if (varType == "char") {
+                symbolTable[varName].value.charval = (yyvsp[-1].floatval);
+            } else if (varType == "string") {
+                yyerror("String assignment not yet implemented.");
+            } else {
+                yyerror(("Unknown type for variable: " + varName).c_str());
+            }
+        }
+    }
+#line 1604 "parser.tab.cpp"
     break;
 
-  case 29: /* factor: NUMBER_CONST  */
-#line 100 "parser.y"
-                 { (yyval.intval) = (yyvsp[0].intval); }
-#line 1469 "parser.tab.c"
+  case 19: /* assignment: IDENTIFIER ASSIGN error SEMICOLON  */
+#line 201 "parser.y"
+                                        { yyerror("Error in assignment expression."); }
+#line 1610 "parser.tab.cpp"
     break;
 
-  case 30: /* factor: IDENTIFIER  */
-#line 101 "parser.y"
-                 { (yyval.intval) = 0; }
-#line 1475 "parser.tab.c"
+  case 20: /* print_stmt: PRINT IDENTIFIER SEMICOLON  */
+#line 205 "parser.y"
+                               {
+        checkVariable(*(yyvsp[-1].strval));
+        std::string varName = *(yyvsp[-1].strval);
+        std::string varType = getVariableType(varName);
+
+        if (varType == "int") {
+            printf("%s = %d\n", varName.c_str(), symbolTable[varName].value.intval);
+        } else if (varType == "float") {
+            printf("%s = %f\n", varName.c_str(), symbolTable[varName].value.floatval);
+        } else if (varType == "char") {
+            printf("%s = %c\n", varName.c_str(), symbolTable[varName].value.charval);
+        } else if (varType == "string") {
+            printf("%s = %s\n", varName.c_str(), symbolTable[varName].value.strval->c_str());
+        } else {
+            yyerror(("Unknown type for variable: " + varName).c_str());
+        }
+    }
+#line 1632 "parser.tab.cpp"
     break;
 
-  case 31: /* factor: STRING_CONST  */
-#line 102 "parser.y"
-                   { printf("String: %s\n", (yyvsp[0].strval)); (yyval.intval) = 0; }
-#line 1481 "parser.tab.c"
+  case 21: /* read_stmt: READ IDENTIFIER SEMICOLON  */
+#line 225 "parser.y"
+                              {
+        checkVariable(*(yyvsp[-1].strval));
+    }
+#line 1640 "parser.tab.cpp"
     break;
 
-  case 32: /* factor: CHAR_CONST  */
-#line 103 "parser.y"
-                 { printf("Character: %s\n", (yyvsp[0].strval)); (yyval.intval) = 0; }
-#line 1487 "parser.tab.c"
+  case 24: /* if_stmt: IF LEFT_ROUND_BRACKET error RIGHT_ROUND_BRACKET LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET  */
+#line 233 "parser.y"
+                                                                                                        { yyerror("Error recovered in if statement"); }
+#line 1646 "parser.tab.cpp"
     break;
 
-  case 33: /* factor: LEFT_ROUND_BRACKET expression RIGHT_ROUND_BRACKET  */
-#line 104 "parser.y"
-                                                        { (yyval.intval) = (yyvsp[-1].intval); }
-#line 1493 "parser.tab.c"
+  case 26: /* expression: expression PLUS term  */
+#line 241 "parser.y"
+                         {
+        if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "addition")) {
+            (yyval.floatval) = (yyvsp[-2].floatval) + (yyvsp[0].floatval);
+        } else {
+            (yyval.floatval) = 0;
+        }
+    }
+#line 1658 "parser.tab.cpp"
+    break;
+
+  case 27: /* expression: expression MINUS term  */
+#line 248 "parser.y"
+                            {
+        if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "subtraction")) {
+            (yyval.floatval) = (yyvsp[-2].floatval) - (yyvsp[0].floatval);
+        } else {
+            (yyval.floatval) = 0;
+        }
+    }
+#line 1670 "parser.tab.cpp"
+    break;
+
+  case 28: /* expression: expression GREATER_THAN term  */
+#line 255 "parser.y"
+                                   {
+        if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "comparison")) {
+            (yyval.floatval) = (yyvsp[-2].floatval) > (yyvsp[0].floatval);
+        } else {
+            (yyval.floatval) = 0;
+        }
+    }
+#line 1682 "parser.tab.cpp"
+    break;
+
+  case 29: /* expression: expression LESS_THAN term  */
+#line 262 "parser.y"
+                                {
+        if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "comparison")) {
+            (yyval.floatval) = (yyvsp[-2].floatval) < (yyvsp[0].floatval);
+        } else {
+            (yyval.floatval) = 0;
+        }
+    }
+#line 1694 "parser.tab.cpp"
+    break;
+
+  case 30: /* expression: term  */
+#line 269 "parser.y"
+           { (yyval.floatval) = (yyvsp[0].floatval); }
+#line 1700 "parser.tab.cpp"
+    break;
+
+  case 31: /* term: term MUL factor  */
+#line 273 "parser.y"
+                    {
+        if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "multiplication")) {
+            (yyval.floatval) = (yyvsp[-2].floatval) * (yyvsp[0].floatval);
+        } else {
+            (yyval.floatval) = 0;
+        }
+    }
+#line 1712 "parser.tab.cpp"
+    break;
+
+  case 32: /* term: term DIVISION factor  */
+#line 280 "parser.y"
+                           {
+        if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "division")) {
+            (yyval.floatval) = (yyvsp[-2].floatval) / (yyvsp[0].floatval);
+        } else {
+            (yyval.floatval) = 0;
+        }
+    }
+#line 1724 "parser.tab.cpp"
+    break;
+
+  case 33: /* term: factor  */
+#line 287 "parser.y"
+             { (yyval.floatval) = (yyvsp[0].floatval); }
+#line 1730 "parser.tab.cpp"
+    break;
+
+  case 34: /* factor: INT_CONST  */
+#line 292 "parser.y"
+              { (yyval.floatval) = (yyvsp[0].intval); }
+#line 1736 "parser.tab.cpp"
+    break;
+
+  case 35: /* factor: FLOAT_CONST  */
+#line 293 "parser.y"
+                  { (yyval.floatval) = (yyvsp[0].floatval); }
+#line 1742 "parser.tab.cpp"
+    break;
+
+  case 36: /* factor: IDENTIFIER  */
+#line 294 "parser.y"
+                 {
+        checkVariable(*(yyvsp[0].strval));
+        std::string varName = *(yyvsp[0].strval);
+        std::string varType = getVariableType(varName);
+
+        if (varType == "int") {
+            (yyval.floatval) = symbolTable[varName].value.intval;
+        } else if (varType == "float") {
+            (yyval.floatval) = symbolTable[varName].value.floatval;
+        } else if (varType == "char") {
+            yyerror("Char type not supported in expressions yet.");
+        } else if (varType == "string") {
+            yyerror("String type not supported in expressions yet.");
+        } else {
+            yyerror(("Unknown type for variable: " + varName).c_str());
+        }
+    }
+#line 1764 "parser.tab.cpp"
+    break;
+
+  case 37: /* factor: LEFT_ROUND_BRACKET expression RIGHT_ROUND_BRACKET  */
+#line 311 "parser.y"
+                                                        { (yyval.floatval) = (yyvsp[-1].floatval); }
+#line 1770 "parser.tab.cpp"
     break;
 
 
-#line 1497 "parser.tab.c"
+#line 1774 "parser.tab.cpp"
 
       default: break;
     }
@@ -1717,7 +1994,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 107 "parser.y"
+#line 314 "parser.y"
 
 
 void yyerror(const char *s) {

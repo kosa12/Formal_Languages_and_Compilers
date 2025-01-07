@@ -5,15 +5,16 @@ if [[ ! -f "lexer.l" || ! -f "parser.y" ]]; then
   exit 1
 fi
 
-echo "Running Flex..."
-flex lexer.l
 
 echo "Running Bison..."
-bison -d parser.y
+bison -d -Wcounterexamples -o parser.tab.cpp parser.y
+
+echo "Running Flex..."
+flex -o lex.yy.cpp lexer.l
 
 
 echo "Compiling..."
-gcc -o parser parser.tab.c lex.yy.c -lfl
+g++ -o parser parser.tab.cpp lex.yy.cpp -lfl
 
 echo "Running the program..."
 echo ""
@@ -21,4 +22,7 @@ echo ""
 echo ""
 ./parser < bemenet.txt
 
+echo ""
+echo ""
+echo ""
 echo "Finished!"

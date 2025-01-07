@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_PARSER_TAB_H_INCLUDED
-# define YY_YY_PARSER_TAB_H_INCLUDED
+#ifndef YY_YY_WCOUNTEREXAMPLES_H_INCLUDED
+# define YY_YY_WCOUNTEREXAMPLES_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -74,9 +74,10 @@ extern int yydebug;
     READ = 275,                    /* READ  */
     PRINT = 276,                   /* PRINT  */
     ASSIGN = 277,                  /* ASSIGN  */
-    ERROR = 278,                   /* ERROR  */
-    GREATER_THAN = 279,            /* GREATER_THAN  */
-    LESS_THAN = 280                /* LESS_THAN  */
+    WHILE = 278,                   /* WHILE  */
+    ERROR = 279,                   /* ERROR  */
+    GREATER_THAN = 280,            /* GREATER_THAN  */
+    LESS_THAN = 281                /* LESS_THAN  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -91,7 +92,7 @@ union YYSTYPE
     float floatval;
     char* strval;
 
-#line 95 "parser.tab.h"
+#line 96 "-Wcounterexamples.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -106,4 +107,4 @@ extern YYSTYPE yylval;
 int yyparse (void);
 
 
-#endif /* !YY_YY_PARSER_TAB_H_INCLUDED  */
+#endif /* !YY_YY_WCOUNTEREXAMPLES_H_INCLUDED  */
