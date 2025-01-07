@@ -63,7 +63,12 @@ bool checkTypeCompatibility(const std::string& type1, const std::string& type2, 
 
 std::string getExpressionType(float value) {
     if (value == static_cast<int>(value)) {
-        return "int";
+        std::string valueStr = std::to_string(value);
+        if (valueStr.find('.') != std::string::npos) {
+            return "float";
+        } else {
+            return "int";
+        }
     } else {
         return "float";
     }
@@ -178,12 +183,10 @@ assignment:
         std::string varType = getVariableType(varName);
         std::string exprType = getExpressionType($3);
 
-        // Check if the type of the expression matches the variable type
         if (!checkTypeCompatibility(varType, exprType, "assignment")) {
-            // If types are incompatible, skip the assignment
             yyerror(("Type mismatch in assignment: " + varType + " and " + exprType).c_str());
+
         } else {
-            // Perform the assignment
             if (varType == "int") {
                 symbolTable[varName].value.intval = $3;
             } else if (varType == "float") {

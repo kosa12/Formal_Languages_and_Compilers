@@ -133,7 +133,12 @@ bool checkTypeCompatibility(const std::string& type1, const std::string& type2, 
 
 std::string getExpressionType(float value) {
     if (value == static_cast<int>(value)) {
-        return "int";
+        std::string valueStr = std::to_string(value);
+        if (valueStr.find('.') != std::string::npos) {
+            return "float";
+        } else {
+            return "int";
+        }
     } else {
         return "float";
     }
@@ -150,7 +155,7 @@ std::string getExpressionType(const std::string& identifier) {
 }
 
 
-#line 154 "parser.tab.cpp"
+#line 159 "parser.tab.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -610,10 +615,10 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   117,   117,   121,   122,   126,   127,   128,   129,   130,
-     131,   135,   139,   165,   169,   170,   171,   172,   176,   201,
-     205,   225,   231,   232,   233,   237,   241,   248,   255,   262,
-     269,   273,   280,   287,   292,   293,   294,   311
+       0,   122,   122,   126,   127,   131,   132,   133,   134,   135,
+     136,   140,   144,   169,   173,   174,   175,   176,   180,   203,
+     207,   227,   233,   234,   235,   239,   243,   250,   257,   264,
+     271,   275,   282,   289,   294,   295,   296,   313
 };
 #endif
 
@@ -1504,16 +1509,16 @@ yyreduce:
   switch (yyn)
     {
   case 11: /* declaration: type IDENTIFIER SEMICOLON  */
-#line 135 "parser.y"
+#line 140 "parser.y"
                               {
         declareVariable(*(yyvsp[-1].strval), *(yyvsp[-2].strval));
         delete (yyvsp[-2].strval);
     }
-#line 1513 "parser.tab.cpp"
+#line 1518 "parser.tab.cpp"
     break;
 
   case 12: /* declaration: type IDENTIFIER ASSIGN expression SEMICOLON  */
-#line 139 "parser.y"
+#line 144 "parser.y"
                                                   {
         declareVariable(*(yyvsp[-3].strval), *(yyvsp[-4].strval));
 
@@ -1524,7 +1529,6 @@ yyreduce:
         if (!checkTypeCompatibility(varType, exprType, "declaration")) {
             yyerror(("Type mismatch in declaration: " + varType + " and " + exprType).c_str());
         } else {
-            // Perform the assignment
             if (varType == "int") {
                 symbolTable[varName].value.intval = (yyvsp[-1].floatval);
             } else if (varType == "float") {
@@ -1540,53 +1544,51 @@ yyreduce:
 
         delete (yyvsp[-4].strval);
     }
-#line 1544 "parser.tab.cpp"
+#line 1548 "parser.tab.cpp"
     break;
 
   case 13: /* declaration: type IDENTIFIER error  */
-#line 165 "parser.y"
+#line 169 "parser.y"
                             { yyerror("Error recovered at declaration level"); }
-#line 1550 "parser.tab.cpp"
+#line 1554 "parser.tab.cpp"
     break;
 
   case 14: /* type: INT  */
-#line 169 "parser.y"
+#line 173 "parser.y"
         { (yyval.strval) = new std::string("int"); }
-#line 1556 "parser.tab.cpp"
+#line 1560 "parser.tab.cpp"
     break;
 
   case 15: /* type: FLOAT  */
-#line 170 "parser.y"
+#line 174 "parser.y"
             { (yyval.strval) = new std::string("float"); }
-#line 1562 "parser.tab.cpp"
+#line 1566 "parser.tab.cpp"
     break;
 
   case 16: /* type: CHAR  */
-#line 171 "parser.y"
+#line 175 "parser.y"
            { (yyval.strval) = new std::string("char"); }
-#line 1568 "parser.tab.cpp"
+#line 1572 "parser.tab.cpp"
     break;
 
   case 17: /* type: STRING  */
-#line 172 "parser.y"
+#line 176 "parser.y"
              { (yyval.strval) = new std::string("string"); }
-#line 1574 "parser.tab.cpp"
+#line 1578 "parser.tab.cpp"
     break;
 
   case 18: /* assignment: IDENTIFIER ASSIGN expression SEMICOLON  */
-#line 176 "parser.y"
+#line 180 "parser.y"
                                            {
         checkVariable(*(yyvsp[-3].strval));
         std::string varName = *(yyvsp[-3].strval);
         std::string varType = getVariableType(varName);
         std::string exprType = getExpressionType((yyvsp[-1].floatval));
 
-        // Check if the type of the expression matches the variable type
         if (!checkTypeCompatibility(varType, exprType, "assignment")) {
-            // If types are incompatible, skip the assignment
             yyerror(("Type mismatch in assignment: " + varType + " and " + exprType).c_str());
+
         } else {
-            // Perform the assignment
             if (varType == "int") {
                 symbolTable[varName].value.intval = (yyvsp[-1].floatval);
             } else if (varType == "float") {
@@ -1600,17 +1602,17 @@ yyreduce:
             }
         }
     }
-#line 1604 "parser.tab.cpp"
+#line 1606 "parser.tab.cpp"
     break;
 
   case 19: /* assignment: IDENTIFIER ASSIGN error SEMICOLON  */
-#line 201 "parser.y"
+#line 203 "parser.y"
                                         { yyerror("Error in assignment expression."); }
-#line 1610 "parser.tab.cpp"
+#line 1612 "parser.tab.cpp"
     break;
 
   case 20: /* print_stmt: PRINT IDENTIFIER SEMICOLON  */
-#line 205 "parser.y"
+#line 207 "parser.y"
                                {
         checkVariable(*(yyvsp[-1].strval));
         std::string varName = *(yyvsp[-1].strval);
@@ -1628,25 +1630,25 @@ yyreduce:
             yyerror(("Unknown type for variable: " + varName).c_str());
         }
     }
-#line 1632 "parser.tab.cpp"
+#line 1634 "parser.tab.cpp"
     break;
 
   case 21: /* read_stmt: READ IDENTIFIER SEMICOLON  */
-#line 225 "parser.y"
+#line 227 "parser.y"
                               {
         checkVariable(*(yyvsp[-1].strval));
     }
-#line 1640 "parser.tab.cpp"
+#line 1642 "parser.tab.cpp"
     break;
 
   case 24: /* if_stmt: IF LEFT_ROUND_BRACKET error RIGHT_ROUND_BRACKET LEFT_CURLY_BRACKET statements RIGHT_CURLY_BRACKET  */
-#line 233 "parser.y"
+#line 235 "parser.y"
                                                                                                         { yyerror("Error recovered in if statement"); }
-#line 1646 "parser.tab.cpp"
+#line 1648 "parser.tab.cpp"
     break;
 
   case 26: /* expression: expression PLUS term  */
-#line 241 "parser.y"
+#line 243 "parser.y"
                          {
         if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "addition")) {
             (yyval.floatval) = (yyvsp[-2].floatval) + (yyvsp[0].floatval);
@@ -1654,11 +1656,11 @@ yyreduce:
             (yyval.floatval) = 0;
         }
     }
-#line 1658 "parser.tab.cpp"
+#line 1660 "parser.tab.cpp"
     break;
 
   case 27: /* expression: expression MINUS term  */
-#line 248 "parser.y"
+#line 250 "parser.y"
                             {
         if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "subtraction")) {
             (yyval.floatval) = (yyvsp[-2].floatval) - (yyvsp[0].floatval);
@@ -1666,11 +1668,11 @@ yyreduce:
             (yyval.floatval) = 0;
         }
     }
-#line 1670 "parser.tab.cpp"
+#line 1672 "parser.tab.cpp"
     break;
 
   case 28: /* expression: expression GREATER_THAN term  */
-#line 255 "parser.y"
+#line 257 "parser.y"
                                    {
         if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "comparison")) {
             (yyval.floatval) = (yyvsp[-2].floatval) > (yyvsp[0].floatval);
@@ -1678,11 +1680,11 @@ yyreduce:
             (yyval.floatval) = 0;
         }
     }
-#line 1682 "parser.tab.cpp"
+#line 1684 "parser.tab.cpp"
     break;
 
   case 29: /* expression: expression LESS_THAN term  */
-#line 262 "parser.y"
+#line 264 "parser.y"
                                 {
         if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "comparison")) {
             (yyval.floatval) = (yyvsp[-2].floatval) < (yyvsp[0].floatval);
@@ -1690,17 +1692,17 @@ yyreduce:
             (yyval.floatval) = 0;
         }
     }
-#line 1694 "parser.tab.cpp"
+#line 1696 "parser.tab.cpp"
     break;
 
   case 30: /* expression: term  */
-#line 269 "parser.y"
+#line 271 "parser.y"
            { (yyval.floatval) = (yyvsp[0].floatval); }
-#line 1700 "parser.tab.cpp"
+#line 1702 "parser.tab.cpp"
     break;
 
   case 31: /* term: term MUL factor  */
-#line 273 "parser.y"
+#line 275 "parser.y"
                     {
         if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "multiplication")) {
             (yyval.floatval) = (yyvsp[-2].floatval) * (yyvsp[0].floatval);
@@ -1708,11 +1710,11 @@ yyreduce:
             (yyval.floatval) = 0;
         }
     }
-#line 1712 "parser.tab.cpp"
+#line 1714 "parser.tab.cpp"
     break;
 
   case 32: /* term: term DIVISION factor  */
-#line 280 "parser.y"
+#line 282 "parser.y"
                            {
         if (checkTypeCompatibility(getExpressionType((yyvsp[-2].floatval)), getExpressionType((yyvsp[0].floatval)), "division")) {
             (yyval.floatval) = (yyvsp[-2].floatval) / (yyvsp[0].floatval);
@@ -1720,29 +1722,29 @@ yyreduce:
             (yyval.floatval) = 0;
         }
     }
-#line 1724 "parser.tab.cpp"
+#line 1726 "parser.tab.cpp"
     break;
 
   case 33: /* term: factor  */
-#line 287 "parser.y"
+#line 289 "parser.y"
              { (yyval.floatval) = (yyvsp[0].floatval); }
-#line 1730 "parser.tab.cpp"
+#line 1732 "parser.tab.cpp"
     break;
 
   case 34: /* factor: INT_CONST  */
-#line 292 "parser.y"
+#line 294 "parser.y"
               { (yyval.floatval) = (yyvsp[0].intval); }
-#line 1736 "parser.tab.cpp"
+#line 1738 "parser.tab.cpp"
     break;
 
   case 35: /* factor: FLOAT_CONST  */
-#line 293 "parser.y"
+#line 295 "parser.y"
                   { (yyval.floatval) = (yyvsp[0].floatval); }
-#line 1742 "parser.tab.cpp"
+#line 1744 "parser.tab.cpp"
     break;
 
   case 36: /* factor: IDENTIFIER  */
-#line 294 "parser.y"
+#line 296 "parser.y"
                  {
         checkVariable(*(yyvsp[0].strval));
         std::string varName = *(yyvsp[0].strval);
@@ -1760,17 +1762,17 @@ yyreduce:
             yyerror(("Unknown type for variable: " + varName).c_str());
         }
     }
-#line 1764 "parser.tab.cpp"
+#line 1766 "parser.tab.cpp"
     break;
 
   case 37: /* factor: LEFT_ROUND_BRACKET expression RIGHT_ROUND_BRACKET  */
-#line 311 "parser.y"
+#line 313 "parser.y"
                                                         { (yyval.floatval) = (yyvsp[-1].floatval); }
-#line 1770 "parser.tab.cpp"
+#line 1772 "parser.tab.cpp"
     break;
 
 
-#line 1774 "parser.tab.cpp"
+#line 1776 "parser.tab.cpp"
 
       default: break;
     }
@@ -1994,7 +1996,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 314 "parser.y"
+#line 316 "parser.y"
 
 
 void yyerror(const char *s) {
