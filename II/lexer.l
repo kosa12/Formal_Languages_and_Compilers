@@ -18,7 +18,7 @@ extern std::unordered_map<std::string, int> symbolTable;
 IDENTIFIER        [a-zA-Z][a-zA-Z0-9_]*
 INT_CONST         [0-9]+
 FLOAT_CONST       [0-9]+\.[0-9]+
-STRING_CONST      \"[a-zA-Z0-9_]*\"
+STRING_CONST      \"[^\"]*\"
 CHAR_CONST        \'[a-zA-Z0-9_]\'
 
 %%
@@ -63,11 +63,11 @@ CHAR_CONST        \'[a-zA-Z0-9_]\'
     return FLOAT_CONST;
 }
 {STRING_CONST} {
-    yylval.strval = new std::string(yytext);
+    yylval.strval = new std::string(yytext + 1, strlen(yytext) - 2);
     return STRING_CONST;
 }
 {CHAR_CONST} {
-    yylval.strval = new std::string(yytext);
+    yylval.strval = new std::string(yytext + 1, strlen(yytext) - 2);
     return CHAR_CONST;
 }
 

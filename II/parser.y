@@ -99,6 +99,15 @@ void popExecutionState() {
     }
 }
 
+void cleanupSymbolTable() {
+    for (auto& entry : symbolTable) {
+        if (entry.second.type == "string" && entry.second.value.strval != nullptr) {
+            delete entry.second.value.strval;
+        }
+    }
+}
+
+
 %}
 
 %union {
@@ -159,6 +168,38 @@ declaration:
         declareVariable(*$2, *$1);
         delete $1;
     }
+    | type IDENTIFIER ASSIGN CHAR_CONST SEMICOLON {
+        declareVariable(*$2, *$1);
+
+        std::string varName = *$2;
+        std::string varType = getVariableType(varName);
+
+        if (varType != "char") {
+            yyerror(("Type mismatch: expected 'char', got " + varType).c_str());
+        } else {
+            symbolTable[varName].value.charval = (*$4)[0];
+        }
+
+        delete $1;
+        delete $2;
+        delete $4;
+    }
+    | type IDENTIFIER ASSIGN STRING_CONST SEMICOLON {
+        declareVariable(*$2, *$1);
+
+        std::string varName = *$2;
+        std::string varType = getVariableType(varName);
+
+        if (varType != "string") {
+            yyerror(("Type mismatch: expected 'string', got " + varType).c_str());
+        } else {
+            symbolTable[varName].value.strval = new std::string(*$4);
+        }
+
+        delete $1;
+        delete $2;
+        delete $4;
+    }
     | type IDENTIFIER ASSIGN expression SEMICOLON {
         declareVariable(*$2, *$1);
 
@@ -217,6 +258,45 @@ assignment:
             }
         }
     }
+    | IDENTIFIER ASSIGN CHAR_CONST SEMICOLON {
+        if (shouldExecute){
+            checkVariable(*$1);
+            std::string varName = *$1;
+            std::string varType = getVariableType(varName);
+
+            if (varType != "char") {
+                yyerror(("Type mismatch in assignment: expected 'char', got " + varType).c_str());
+            } else {
+                if ((*$3).length() != 1) {
+                    yyerror("Invalid assignment: expected a single character.");
+                } else {
+                    symbolTable[varName].value.charval = (*$3)[0];
+                }
+            }
+        }
+
+        delete $1;
+        delete $3;
+    }
+    | IDENTIFIER ASSIGN STRING_CONST SEMICOLON {
+        if (shouldExecute) {
+            checkVariable(*$1);
+            std::string varName = *$1;
+            std::string varType = getVariableType(varName);
+
+            if (varType != "string") {
+                yyerror(("Type mismatch in assignment: expected 'string', got " + varType).c_str());
+            } else {
+                if (symbolTable[varName].value.strval != nullptr) {
+                    delete symbolTable[varName].value.strval;
+                }
+                symbolTable[varName].value.strval = new std::string(*$3);
+            }
+        }
+
+        delete $1;
+        delete $3;
+    }
     ;
 
 print_stmt:
@@ -235,7 +315,7 @@ print_stmt:
             } else if (varType == "string") {
                 printf("%s = %s\n", varName.c_str(), symbolTable[varName].value.strval->c_str());
             }
-        } 
+        }
     }
     ;
 
@@ -357,4 +437,6 @@ void yyerror(const char *s) {
 
 int main(void) {
     return yyparse();
+
+    cleanupSymbolTable();
 }

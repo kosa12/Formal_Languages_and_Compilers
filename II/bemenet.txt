@@ -8,3 +8,22 @@ if (j > 2.2) {
 } else {
     print j;
 }
+
+int x;
+x = 10 + 2;
+x = x + 2;
+print x;
+
+string name = "Odon";
+print name;
+
+string lol;
+lol = "asd";
+print lol;
+
+char l = 'g';
+print l;
+
+char k;
+k = 'f';
+print k;
